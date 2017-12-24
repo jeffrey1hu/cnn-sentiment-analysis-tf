@@ -1,4 +1,4 @@
-class BaseModel(object):
+class Model(object):
     """Abstracts a Tensorflow graph for a learning task.
 
     We use various Model classes as usual abstractions to encapsulate tensorflow

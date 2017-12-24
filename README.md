@@ -1,7 +1,9 @@
 # cnn-text-sentiment-analysis-tf
 In this project we will implement a movie rating Sentiment (Positive/Negative) Classifier with CNN using TensorFlow.
-The project is under the guide of the great blog post on [CNN classification](http://www.wildml.com/2015/12/implementing-a-cnn-for-text-classification-in-tensorflow/).
-Almost re-implement the paper: [Convolutional Neural Networks for Sentence Classification](https://arxiv.org/abs/1408.5882)
+## Note
+- The project is under the guide of the great blog post on [CNN classification](http://www.wildml.com/2015/12/implementing-a-cnn-for-text-classification-in-tensorflow/).
+- Almost re-implement the paper: [Convolutional Neural Networks for Sentence Classification](https://arxiv.org/abs/1408.5882)
+- the best precision under random init of word embeddings is 75.21%
 
 ## Dataset
 The existing data set is the [Moive review data from Rotten Tomatoes](http://www.cs.cornell.edu/people/pabo/movie-review-data/) which is pretty small but convenient to tune the model under CPUs.
@@ -20,6 +22,7 @@ python train.py
 ```
 
 ## TO DO
+- [ ] add LSTM baseline model
 - [ ] add TensorBoard visualization
 - [ ] add learning rate exponential decay to enhence generalization
 - [ ] Initialize the embeddings with pre-trained word vectors (word2vec, glove)
