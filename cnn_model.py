@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from model import BaseModel
+from model import Model
 from utils.general_utils import Progbar
 from utils.data_helpers import get_minibatches
 
@@ -30,41 +30,45 @@ class CNNModel(Model):
         with tf.device('/cpu:0'), tf.variable_scope("embedding"):
             embedding_mat = tf.Variable(self.init_embeddings, name="embedding_mat")
             embedded_sentence = tf.nn.embedding_lookup(embedding_mat, self.input_placeholder)
+            # conv2d operation expects a 4-dimensional tensor
+            # with dimensions corresponding to batch, width, height and channel.
             embedded_sentence_expanded = tf.expand_dims(embedded_sentence, -1)
         return embedded_sentence_expanded
 
     def add_prediction_op(self):
-        # Create a convolution + maxpool layer for each filter size
         embedded_sentence_expanded = self.add_embedding()
-        pooled_outputs = []
-        for i, filter_size in enumerate(self.config.filter_sizes):
-            with tf.variable_scope('conv-maxpool-layer-%d' % filter_size):
-                # Convolution Layer
-                filter_shape = [filter_size, self.config.embed_size, 1, self.config.num_filters]
-                W = tf.get_variable("W", shape=filter_shape, initializer=tf.contrib.layers.xavier_initializer())
-                b = tf.get_variable("b", shape=[self.config.num_filters], initializer=tf.constant_initializer(0.1))
-                conv = tf.nn.conv2d(
-                    embedded_sentence_expanded,
-                    W,
-                    strides=[1, 1, 1, 1],
-                    padding="VALID",
-                    name="conv")
-                # Add nonlinearity
-                h = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
-                # Maxpooling over the outputs
-                # ksize -> (batch_size, heigth, width, channel)
-                pooled = tf.nn.max_pool(
-                    h,
-                    ksize=[1, self.config.max_sequence_length - filter_size + 1, 1, 1],
-                    strides=[1, 1, 1, 1],
-                    padding='VALID',
-                    name="pool")
-                # shape of pooled -> (batch_size, 1, 1, channel_size)
-                pooled_outputs.append(pooled)
-        # Combine all the pooled features
-        num_filters_total = self.config.num_filters * len(self.config.filter_sizes)
-        h_pool = tf.concat(pooled_outputs, 3)
-        h_pool_flat = tf.reshape(h_pool, [-1, num_filters_total])
+
+        with tf.variable_scope("cnn"):
+            # Create a convolution + maxpool layer for each filter size
+            pooled_outputs = []
+            for i, filter_size in enumerate(self.config.filter_sizes):
+                with tf.variable_scope('conv-maxpool-layer-%d' % filter_size):
+                    # Convolution Layer
+                    filter_shape = [filter_size, self.config.embed_size, 1, self.config.num_filters]
+                    W = tf.get_variable("W", shape=filter_shape, initializer=tf.contrib.layers.xavier_initializer())
+                    b = tf.get_variable("b", shape=[self.config.num_filters], initializer=tf.constant_initializer(0.1))
+                    conv = tf.nn.conv2d(
+                        embedded_sentence_expanded,
+                        W,
+                        strides=[1, 1, 1, 1],
+                        padding="VALID",
+                        name="conv")
+                    # Add nonlinearity
+                    h = tf.nn.relu(tf.nn.bias_add(conv, b), name="relu")
+                    # Maxpooling over the outputs
+                    # ksize -> (batch_size, heigth, width, channel)
+                    pooled = tf.nn.max_pool(
+                        h,
+                        ksize=[1, self.config.max_sequence_length - filter_size + 1, 1, 1],
+                        strides=[1, 1, 1, 1],
+                        padding='VALID',
+                        name="pool")
+                    # shape of pooled -> (batch_size, 1, 1, channel_size)
+                    pooled_outputs.append(pooled)
+            # Combine all the pooled features
+            num_filters_total = self.config.num_filters * len(self.config.filter_sizes)
+            h_pool = tf.concat(pooled_outputs, 3)
+            h_pool_flat = tf.reshape(h_pool, [-1, num_filters_total])
 
         # add dropout
         with tf.variable_scope("dropout"):
