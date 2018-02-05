@@ -55,6 +55,12 @@ def main(args):
                 os.makedirs(out_dir)
             dataset.vocab_processor.save(os.path.join(out_dir, "vocab"))
 
+            # Summaries for loss and accuracy
+            loss_summary = tf.summary.scalar("loss", model.loss)
+            acc_summary = tf.summary.scalar("accuracy", model.accuracy)
+
+
+
             # Checkpoint directory. Tensorflow assumes this directory already exists so we need to create it
             checkpoint_dir = os.path.abspath(os.path.join(out_dir, "checkpoints"))
             checkpoint_prefix = os.path.join(checkpoint_dir, "model")
